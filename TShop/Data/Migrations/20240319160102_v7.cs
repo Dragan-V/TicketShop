@@ -5,7 +5,7 @@
 namespace TShop.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class DBM : Migration
+    public partial class v7 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

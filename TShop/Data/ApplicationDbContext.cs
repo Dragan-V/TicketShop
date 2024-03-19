@@ -10,5 +10,7 @@ namespace TShop.Data
             : base(options)
         {
         }
+        public DbSet<TShop.Models.TheatreShow> TheatreShow { get; set; } = default!;
+        public DbSet<TShop.Models.Ticket> Ticket { get; set; } = default!;
     }
 }
