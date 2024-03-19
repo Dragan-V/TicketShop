@@ -12,8 +12,8 @@ using TShop.Data;
 namespace TShop.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240310163604_DBM")]
-    partial class DBM
+    [Migration("20240319111130_v6")]
+    partial class v6
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
