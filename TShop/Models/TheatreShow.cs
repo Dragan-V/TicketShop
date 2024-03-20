@@ -21,5 +21,7 @@ namespace TShop.Models
         [Url]
         public string ImageUrl { get; set; }
 
+        public ICollection<Ticket> Tickets { get; set; }
+
     }
 }
