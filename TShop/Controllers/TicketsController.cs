@@ -2,17 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TShop.Data;
 using TShop.Models;
 
 namespace TShop.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class TicketsController : ControllerBase
+    public class TicketsController : Controller
     {
         private readonly ApplicationDbContext _context;
 
@@ -21,88 +19,153 @@ namespace TShop.Controllers
             _context = context;
         }
 
-        // GET: api/Tickets
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Ticket>>> GetTicket()
+        // GET: Tickets
+        public async Task<IActionResult> Index()
         {
-            return await _context.Ticket.ToListAsync();
+            var applicationDbContext = _context.Tickets.Include(t => t.TheatreShow).Include(t => t.User);
+            return View(await applicationDbContext.ToListAsync());
         }
 
-        // GET: api/Tickets/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Ticket>> GetTicket(Guid id)
+        // GET: Tickets/Details/5
+        public async Task<IActionResult> Details(Guid? id)
         {
-            var ticket = await _context.Ticket.FindAsync(id);
+            if (id == null)
+            {
+                return NotFound();
+            }
 
+            var ticket = await _context.Tickets
+                .Include(t => t.TheatreShow)
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (ticket == null)
             {
                 return NotFound();
             }
 
-            return ticket;
+            return View(ticket);
         }
 
-        // PUT: api/Tickets/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutTicket(Guid id, Ticket ticket)
+        // GET: Tickets/Create
+        public IActionResult Create()
+        {
+            ViewData["TheatreShowId"] = new SelectList(_context.TheatreShows, "Id", "Description");
+            ViewData["UserId"] = new SelectList(_context.TShopUsers, "Id", "Id");
+            return View();
+        }
+
+        // POST: Tickets/Create
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("Id,Price,TheatreShowId,UserId")] Ticket ticket)
+        {
+            if (ModelState.IsValid)
+            {
+                ticket.Id = Guid.NewGuid();
+                _context.Add(ticket);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            ViewData["TheatreShowId"] = new SelectList(_context.TheatreShows, "Id", "Description", ticket.TheatreShowId);
+            ViewData["UserId"] = new SelectList(_context.TShopUsers, "Id", "Id", ticket.UserId);
+            return View(ticket);
+        }
+
+        // GET: Tickets/Edit/5
+        public async Task<IActionResult> Edit(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var ticket = await _context.Tickets.FindAsync(id);
+            if (ticket == null)
+            {
+                return NotFound();
+            }
+            ViewData["TheatreShowId"] = new SelectList(_context.TheatreShows, "Id", "Description", ticket.TheatreShowId);
+            ViewData["UserId"] = new SelectList(_context.TShopUsers, "Id", "Id", ticket.UserId);
+            return View(ticket);
+        }
+
+        // POST: Tickets/Edit/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to.
+        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(Guid id, [Bind("Id,Price,TheatreShowId,UserId")] Ticket ticket)
         {
             if (id != ticket.Id)
             {
-                return BadRequest();
+                return NotFound();
             }
 
-            _context.Entry(ticket).State = EntityState.Modified;
-
-            try
+            if (ModelState.IsValid)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TicketExists(id))
+                try
                 {
-                    return NotFound();
+                    _context.Update(ticket);
+                    await _context.SaveChangesAsync();
                 }
-                else
+                catch (DbUpdateConcurrencyException)
                 {
-                    throw;
+                    if (!TicketExists(ticket.Id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
+                return RedirectToAction(nameof(Index));
             }
-
-            return NoContent();
+            ViewData["TheatreShowId"] = new SelectList(_context.TheatreShows, "Id", "Description", ticket.TheatreShowId);
+            ViewData["UserId"] = new SelectList(_context.TShopUsers, "Id", "Id", ticket.UserId);
+            return View(ticket);
         }
 
-        // POST: api/Tickets
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Ticket>> PostTicket(Ticket ticket)
+        // GET: Tickets/Delete/5
+        public async Task<IActionResult> Delete(Guid? id)
         {
-            _context.Ticket.Add(ticket);
-            await _context.SaveChangesAsync();
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-            return CreatedAtAction("GetTicket", new { id = ticket.Id }, ticket);
-        }
-
-        // DELETE: api/Tickets/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteTicket(Guid id)
-        {
-            var ticket = await _context.Ticket.FindAsync(id);
+            var ticket = await _context.Tickets
+                .Include(t => t.TheatreShow)
+                .Include(t => t.User)
+                .FirstOrDefaultAsync(m => m.Id == id);
             if (ticket == null)
             {
                 return NotFound();
             }
 
-            _context.Ticket.Remove(ticket);
-            await _context.SaveChangesAsync();
+            return View(ticket);
+        }
 
-            return NoContent();
+        // POST: Tickets/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(Guid id)
+        {
+            var ticket = await _context.Tickets.FindAsync(id);
+            if (ticket != null)
+            {
+                _context.Tickets.Remove(ticket);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
 
         private bool TicketExists(Guid id)
         {
-            return _context.Ticket.Any(e => e.Id == id);
+            return _context.Tickets.Any(e => e.Id == id);
         }
     }
 }
